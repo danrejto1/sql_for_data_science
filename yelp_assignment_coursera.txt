@@ -1,0 +1,230 @@
+-- Author: Dan Blaustein-Rejto
+-- Date: 6/9/2018 
+-- Description: This code analyses a subset of Yelp's dataset. The data files and structure of the tables is available at https://www.yelp.com/dataset/documentation/sql. The analysis was conducted for the Coursera course 'SQL for Data Science.' Information on this course is available at https://www.coursera.org/learn/sql-for-data-science/home/welcome.
+
+/* The total number of records for each of the tables is listed below (code omitted):	
+	Attribute table = 10,000
+	Business table = 10,000
+	Category table = 10,000
+	Checkin table = 10,000
+	elite_years table = 10,000
+	friend table = 10,000
+	hours table = 10,000
+	photo table = 10,000
+	review table = 10,000
+	tip table =  10,000
+	user table = 10,000
+
+
+The total number of distinct records for the primary keys in each of the tables is listed below (code omitted):
+	Business = 10000
+	Hours = 1562
+	Category = 2643
+	Attribute = 1115
+	Review = 10000
+	Checkin = 493 
+	Photo = 10000
+	Tip = 537 distinct user IDs and 3979 distinct business IDs (No Primary Key)
+	User = 10000
+	Friend =  11
+	Elite_years = 2780 
+
+	
+There are no columns will null values, as indicated below: */
+	SELECT 
+		COUNT(id) -- count number of obsevations
+	FROM user  --specify table
+	WHERE 
+		id IS NULL  -- filter data to count number of observations where any column is null
+		OR name IS NULL 
+		OR review_count IS NULL 
+		OR yelping_since IS NULL 
+		OR useful IS NULL 
+		OR funny IS NULL 
+		OR cool IS NULL 
+		OR fans IS NULL 
+		OR average_stars IS NULL 
+		OR compliment_hot IS NULL 
+		OR compliment_more IS NULL 
+		OR compliment_profile IS NULL 
+		OR compliment_cute IS NULL 
+		OR compliment_list IS NULL 
+		OR compliment_note IS NULL 
+		OR compliment_plain IS NULL 
+		OR compliment_cool IS NULL 
+		OR compliment_funny IS NULL 
+		OR compliment_writer IS NULL 
+		OR compliment_photos IS NULL 
+
+
+
+-- Cities with the most reviews in descending order:
+	SELECT 
+		city, 
+		SUM(review_count) as city_reviews
+	FROM business
+	GROUP BY city --aggregate number of reviews by city
+	ORDER BY city_reviews DESC   
+
+/* Results:
++-----------------+--------------+
+| city            | city_reviews |
++-----------------+--------------+
+| Las Vegas       |        82854 |
+| Phoenix         |        34503 |
+| Toronto         |        24113 |
+| Scottsdale      |        20614 |
+| Charlotte       |        12523 |
+| Henderson       |        10871 |
+| Tempe           |        10504 |
+| Pittsburgh      |         9798 |
+| Montréal        |         9448 |
+| Chandler        |         8112 |
+| Mesa            |         6875 |
+| Gilbert         |         6380 |
+| Cleveland       |         5593 |
+| Madison         |         5265 |
+| Glendale        |         4406 |
+| Mississauga     |         3814 |
+| Edinburgh       |         2792 |
+| Peoria          |         2624 |
+| North Las Vegas |         2438 |
+| Markham         |         2352 |
+| Champaign       |         2029 |
+| Stuttgart       |         1849 |
+| Surprise        |         1520 |
+| Lakewood        |         1465 |
+| Goodyear        |         1155 |
++-----------------+--------------+
+(Output limit exceeded, 25 of 362 total rows shown)
+*/
+
+	
+-- Distribution of star ratings to businesses in one sample city, Avon:
+	SELECT 
+		stars, 
+		count(id) AS num_businesses  --count number of businesses
+	FROM business
+		WHERE city='Avon'
+	GROUP BY stars   --aggregate by star ratings
+	ORDER BY stars ASC
+
+
+/* Results
++-------+----------------+
+| stars | num_businesses |
++-------+----------------+
+|   1.5 |              1 |
+|   2.5 |              2 |
+|   3.5 |              3 |
+|   4.0 |              2 |
+|   4.5 |              1 |
+|   5.0 |              1 |
++-------+----------------+
+*/
+
+		
+
+-- Top 3 users with most reviews:
+	SELECT 
+		name, id, review_count
+	FROM user
+	ORDER BY review_count DESC
+	LIMIT 3	
+		
+/* Results:
++-----------+------------------------+--------------+
+| name      | id                     | review_count |
++-----------+------------------------+--------------+
+| Gerald    | -G7Zkl1wIWBBmD0KRy_sCw |         2000 |
+| Sara      | -3s52C4zL_DHRK0ULG6qtg |         1629 |
+| Yuri      | -8lbUNlXVSoXqaRRiHiSNg |         1339 |		
++-----------+------------------------+--------------+
+(Output limit exceeded, 3 of 10000 total rows shown)
+*/
+
+
+
+-- Top 10 users with the most fans:
+	SELECT
+		id, name, fans
+	FROM user
+	GROUP BY id
+	ORDER BY fans DESC
+	LIMIT 10
+	
+
+/* Results:
++------------------------+-----------+------+
+| id                     | name      | fans |
++------------------------+-----------+------+
+| -9I98YbNQnLdAmcYfb324Q | Amy       |  503 |
+| -8EnCioUmDygAbsYZmTeRQ | Mimi      |  497 |
+| --2vR0DIsmQ6WfcSzKWigw | Harald    |  311 |
+| -G7Zkl1wIWBBmD0KRy_sCw | Gerald    |  253 |
+| -0IiMAZI2SsQ7VmyzJjokQ | Christine |  173 |
+| -g3XIcCb2b-BD0QBCcq2Sw | Lisa      |  159 |
+| -9bbDysuiWeo2VShFJJtcw | Cat       |  133 |
+| -FZBTkAZEXoP7CYvRV2ZwQ | William   |  126 |
+| -9da1xk7zgnnfO1uTVYGkA | Fran      |  124 |
+| -lh59ko3dxChBSZ9U7LfUw | Lissa     |  120 |
++------------------------+-----------+------+
+*/
+
+
+		
+-- Analysis of basic differences between businesses that are open and closed. 
+	SELECT 
+		AVG(review_count), AVG(stars), is_open
+	FROM business
+	GROUP BY is_open	
+
+/* Results: 
+The closed restaurants have lower review counts than the open restaurants. On average, they have 23.198 reviews compared to 31.757 for the open restaurants.         
+The closed restaurants have lower star ratings than the open restaurants. On average, they have 3.52 ratings compared to 31.76 for the open restaurants.       */      
+         
+	
+	
+/* Analysis of relationship between "negative" sentiment of reviews and star ratings	
+
+There is no variable in the database for how negative a review is. I therefore define negative reviews as those containing the words "no", "not", "bad", "won't", "awful", or "poor". I create a yes/no binary variable caled "negative" for whether the "text" field in the review table contains any of these words. Then I join the review table to the business table. I group the business star ratings into low (0.0-2.0), medium (2.5-3.5), and high(4.0-5.0) groups and aggregate the number of negative reviews by these star groups, the number of total reviews, and the percent of the reviews that were negative. 
+
+I choose to display the number of negative reviews and the percent that are negative because the number of negative reviews is correlated with the total number of reviews a business receives. This can be seen in my results - higher rated restaurants receive many more negative reviews than poorly rated ones, but they also receives many more reviews in general. Calculating the percent that are negative addresses this and shows that there is a positive correlation between negative reviews and poor star ratings. */                   
+				  
+	SELECT 
+	  CASE 
+	    WHEN b.stars <=2.0 THEN 'low'
+	    WHEN b.stars >2.0 AND b.stars<4.0 THEN 'medium'
+	    WHEN b.stars >=4.0 THEN 'high'
+	    ELSE 'NAN'
+	  END business_star_rating,
+	  SUM(negative) AS num_neg, --total number negative reviews
+	  COUNT(r_id) AS num_reviews, -- total number of reviews
+	  AVG(negative) AS pct_neg --percent of reviews negative 
+	FROM business b 
+	LEFT JOIN --join business & review tables
+	  (SELECT business_id, id AS r_id,
+	    CASE --create indicator if review text seems negative
+	      WHEN text LIKE '%no%' THEN 1
+	      WHEN text LIKE '%not%' THEN 1
+	      WHEN text LIKE '%bad%' THEN 1
+	      WHEN text LIKE '%wont%' THEN 1
+	      WHEN text LIKE '%poor%' THEN 1
+	      WHEN text LIKE '%awful%' THEN 1
+	      ELSE 0
+	    END negative
+	  FROM review 
+	  ) r  
+	ON  b.id = r.business_id
+	GROUP BY business_star_rating
+	ORDER BY pct_neg DESC  
+				  
+/* Results:				  
++----------------------+---------+-------------+----------------+
+| business_star_rating | num_neg | num_reviews |        pct_neg |
++----------------------+---------+-------------+----------------+
+| low                  |      16 |          19 | 0.842105263158 |
+| medium               |     200 |         282 | 0.709219858156 |
+| high                 |     210 |         335 | 0.626865671642 |
++----------------------+---------+-------------+----------------+
+*/
